@@ -1,0 +1,17 @@
+node_modules/
+
+# env — real secrets never get committed
+.env
+.env.*
+!.env.example
+
+# build artifacts / archives
+dist/
+build/
+*.tar.gz
+
+# logs
+*.log
+npm-debug.log*
+
+.DS_Store

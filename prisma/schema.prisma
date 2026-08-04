@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Rank {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+  DIAMOND
+  MASTER
+}
+
+enum Division {
+  IV
+  III
+  II
+  I
+  NONE // Used for MASTER rank
+}
+
+enum SessionStatus {
+  ACTIVE
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id               String    @id @default(cuid())
+  username         String    @unique
+  email            String    @unique
+  password         String
+  rank             Rank      @default(BRONZE)
+  division         Division  @default(IV)
+  lp               Int       @default(0)
+  totalXP          Int       @default(0)
+  currentStreak    Int       @default(0)
+  longestStreak    Int       @default(0)
+  totalStudyHours  Float     @default(0)
+  sessionsCompleted Int      @default(0)
+  sessionsFailed   Int       @default(0)
+  lastSessionAt    DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  sessions StudySession[]
+
+  @@index([rank, lp]) // For leaderboard queries
+  @@index([totalXP])
+}
+
+model StudySession {
+  id              String        @id @default(cuid())
+  userId          String
+  startTime       DateTime      @default(now())
+  endTime         DateTime?
+  plannedDuration Int           @default(25) // minutes
+  actualDuration  Int?          // minutes (server-calculated)
+  status          SessionStatus @default(ACTIVE)
+  xpAwarded       Int?
+  lpChange        Int?          // positive = gain, negative = loss
+  rankBefore      Rank?
+  divisionBefore  Division?
+  rankAfter       Rank?
+  divisionAfter   Division?
+  createdAt       DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([userId, createdAt]) // For user session history queries
+}
